@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>News Space</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+
+<body>
+    <header>
+        <h1 id="logo">News Space</h1>
+    </header>
+
+    <main>
+        <div class="left-box">
+
+            <div class="endpoint-form">
+                <form action="/news-type" method="post">
+                    <div class="news-type-box dropdown">
+                        <label for="newsType" class="dropdown-label">Select News Type</label>
+                        <select name="newsType">
+                            <option value="everything">Everything</option>
+                            <option value="top-headlines">Top Headlines</option>
+                        </select>
+                    </div>
+                    <button class="btn endpoint-btn">Select</button>
+                </form>
+            </div>
+
+            <div class="options-divider"></div>
+
+            <div class="query-params-form">
+                <% if(locals.endpoint === "everything") { %>
+
+                    <div class="keyword-form">
+                        <form action="/search" method="post">
+                            <div class="keyword-box">
+                                <input type="text" name="keyword" id="keyword" placeholder="Keyword/phrase">
+                                <button id="clear-btn" formaction="/clearKeyword"><img id="clear-img" src="/svg/clear.svg" alt=""></button>
+                                <button type="submit" class="btn search-btn">Search</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="options-form">
+                        <form action="/option" method="post">
+                            <h3 class="options-title">Select from options: </h3>
+
+                            <div class="sort-box dropdown">
+                                <label for="sortBy" class="dropdown-label">Sort By</label>
+                                <select name="sortBy">
+                                    <option value="popularity">Popularity</option>
+                                    <option value="publishedAt">New Articles on top</option>
+                                    <option value="relevancy">Relevancy</option>
+                                </select>
+                            </div>
+
+                            <div class="source-box dropdown">
+                                <label for="sources" class="dropdown-label">Select Source</label>
+                                <select name="sources">
+                                    <option value="allSource">All</option>
+                                    <option value="abc-news">ABC News</option>
+                                    <option value="bbc-news">BBC News</option>
+                                    <option value="bbc-sport">BBC Sport</option>
+                                    <option value="business-insider">Business Insider</option>
+                                    <option value="cnn">CNN</option>
+                                    <option value="crypto-coins-news">Crypto Coins News</option>
+                                    <option value="espn">ESPN</option>
+                                    <option value="google-news">Google News (World)</option>
+                                    <option value="google-news-in">Google News (India)</option>
+                                    <option value="ign">IGN</option>
+                                    <option value="national-geographic">National Geographic</option>
+                                    <option value="reddit-r-all">Reddit</option>
+                                    <option value="techcrunch">TechCrunch</option>
+                                    <option value="the-hindu">The Hindu</option>
+                                    <option value="the-times-of-india">Times of India</option>
+                                </select>
+                            </div>
+
+                            <button type="submit" class="btn option-btn" formaction="/option">Select Options</button>
+                        </form>
+                    </div>  
+                    
+                <% } else if(locals.endpoint === "top-headlines"){ %>
+                        
+                    <div class="options-form">
+                        <form action="/option" method="post">
+                            <h3 class="options-title">Select from options: </h3>
+
+                            <div class="category-box dropdown">
+                                <label for="category" class="dropdown-label">Select Category</label>
+                                <select name="category">
+                                    <option value="allCategory">All</option>
+                                    <option value="business">Business</option>
+                                    <option value="entertainment">Entertainment</option>
+                                    <option value="general">General</option>
+                                    <option value="health">Health</option>
+                                    <option value="science">Science</option>
+                                    <option value="sports">Sports</option>
+                                    <option value="technology">Technology</option>
+                                </select>
+                            </div>
+                            
+                            <button type="submit" class="btn option-btn">Select Options</button>
+                        </form>
+                    </div>
+
+                <% } %>
+            </div>
+        </div>
+
+        <div class="line-divider"></div>
+        
+        <div class="right-box">
+            <!-- loop through news articles to display the news -->
+            <% if(locals.data && locals.data.length > 0) {%>
+            <% data.forEach(news=> { %>
+                <% if(news.title !== "[Removed]"){ %>
+                <div class="news-box">
+                    <h3 class="news-title"> <%= news.title %> </h3>
+                    <p class=" news-detail"> <%= news.source.name %>, <%= news.publishedAt.slice(0,10) %> </p>
+                    <div class="content-box"> 
+                        <% if (news.content !==null){ %>
+                            <p class="text-content"> <%= news.content.slice(0, -14) %> </p>
+                                <% if (news.urlToImage !==null){ %>
+                                    <img src="<%= news.urlToImage %>" alt="News Image" class="news-image">
+                                <% } %>
+                        <% } %>
+                    </div>
+                    <a class="news-url" href="<%= news.url %>" target="_blank">Read Complete Article</a> </div>
+                <% } %>
+            <% }) %>
+            <% } else {%>
+                <% if (locals.data && locals.data.length === 0){ %>
+                    <h3 class="news-title"> No news from the given input. Try Searching with a different input</h3>
+                <% } else { %>
+                    <h3 class="news-title"> Some Error Occurred while fetching news. </h3>
+                <% } %>
+            <% } %>
+        </div>
+
+    </main>
+
+    <script>
+        // keeping the news-type selected as kept by user
+        document.querySelector('option[value = "<%= endpoint %>"]').defaultSelected = true;
+        
+
+        // keeping the options selected as kept by user
+        let selectedOptions = "<%= options %>".split(",")
+
+        for (const option of selectedOptions) {
+            // skip selection if "all" option selected
+            if (!option.includes("all")){
+                document.querySelector(`option[value="${option}"]`).defaultSelected = true;
+            }
+        }
+
+        // making the search keyword the already set value
+        let keyword = "<%= keyword %>".trim()
+        if (keyword !== ""){
+            document.querySelector(`input[name="keyword"]`).value = keyword
+        }
+
+        // resetting the value of input to null, but could not set the same at backend var
+        // document.querySelector("#clear-img").addEventListener("click", ()=>{
+        //     document.querySelector(`input[name="keyword"]`).value = ""
+        // })
+    </script>
+</body>
+
+</html>
